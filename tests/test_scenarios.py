@@ -29,7 +29,8 @@ def test_backdoor_commit_blocked_deploy_refused_and_devin_task_written():
     assert commit.action is Action.BLOCK
     codes = {s.code for s in commit.signals}
     assert {"HARDCODED_BYPASS", "SAFETY_CHECK_REMOVED", "SECRET_IN_CODE", "NEW_EGRESS"} <= codes
-    assert commit.fix_task and "regression test" in commit.fix_task
+    assert commit.fix_task and "regression tests" in commit.fix_task
+    assert "demo_bank/payments/transfer.py" in commit.fix_task
     assert deploy.action is Action.BLOCK
     assert any(s.code == "QUARANTINED_COMMIT" for s in deploy.signals)
 
