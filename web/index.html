@@ -4,149 +4,327 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Night Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0b0e14; --panel: #121722; --panel2: #171d2b; --line: #232b3d;
-    --text: #e6e9f0; --muted: #8b93a7; --accent: #7c8cff;
-    --ok: #3ecf8e; --warn: #f5b84a; --bad: #ff5d6c; --devin: #31c6c6;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --bg: #070a10; --panel: #0f141e; --panel2: #141b28; --line: #1f2838; --line2: #2a3549;
+    --text: #e8ebf2; --muted: #8790a6; --dim: #5d6680; --accent: #8b7bff; --accent2: #5aa9ff;
+    --ok: #34d399; --warn: #fbbf24; --bad: #ff4d6a; --devin: #2dd4bf;
+    --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
-  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--line); }
-  .logo { font-weight: 700; font-size: 20px; letter-spacing: .3px; }
-  .logo span { color: var(--accent); }
-  .tag { color: var(--muted); }
-  .clock { margin-left: auto; font: 600 22px var(--mono); color: var(--accent); }
-  .bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 24px; }
-  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
-           background: var(--panel2); color: var(--text); padding: 8px 14px; }
-  button:hover { border-color: var(--accent); }
-  button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button:disabled { opacity: .5; cursor: default; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 24px 14px; }
-  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
-  .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
-  .kpi .value { font: 700 24px var(--mono); margin-top: 4px; }
-  .kpi .sub { color: var(--muted); font-size: 12px; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.5 var(--sans); min-height: 100vh;
+         background-image:
+           radial-gradient(900px 500px at 10% -10%, rgba(139,123,255,.16), transparent 60%),
+           radial-gradient(800px 500px at 100% 0%, rgba(90,169,255,.10), transparent 60%),
+           linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+           linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+         background-size: auto, auto, 32px 32px, 32px 32px; }
+  body.attack { background-image:
+           radial-gradient(900px 500px at 10% -10%, rgba(255,77,106,.20), transparent 60%),
+           radial-gradient(800px 500px at 100% 0%, rgba(255,77,106,.10), transparent 60%),
+           linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+           linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+         background-size: auto, auto, 32px 32px, 32px 32px; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 0 24px 28px; }
+  a { color: var(--accent2); }
+
+  /* header */
+  header { display: flex; align-items: center; gap: 18px; padding: 18px 0 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { width: 40px; height: 40px; filter: drop-shadow(0 0 12px rgba(139,123,255,.55)); }
+  .logo { font-weight: 800; font-size: 22px; letter-spacing: -.3px; }
+  .logo span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text;
+               background-clip: text; color: transparent; }
+  .tag { color: var(--muted); font-size: 13px; }
+  .hright { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .status { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px;
+            border: 1px solid rgba(52,211,153,.35); background: rgba(52,211,153,.08); color: var(--ok);
+            font: 700 13px var(--mono); letter-spacing: .8px; transition: all .3s; white-space: nowrap; }
+  .status i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+  .status.attack { color: var(--bad); border-color: rgba(255,77,106,.5); background: rgba(255,77,106,.12); animation: throb 1s infinite; }
+  .status.contained { color: var(--warn); border-color: rgba(251,191,36,.45); background: rgba(251,191,36,.10); }
+  .status.secured { color: var(--ok); border-color: rgba(52,211,153,.5); background: rgba(52,211,153,.12); }
+  .clockbox { text-align: right; }
+  .clock { font: 700 24px var(--mono); color: var(--text); letter-spacing: 1px; }
+  .clocklbl { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* scenarios */
+  .scen { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .sc { text-align: left; cursor: pointer; border-radius: 14px; border: 1px solid var(--line); background: var(--panel);
+        color: var(--text); padding: 12px 14px; font: inherit; transition: transform .15s, border-color .15s, background .15s; }
+  .sc:hover { transform: translateY(-2px); border-color: var(--line2); }
+  .sc .ic { font: 700 11px var(--mono); padding: 3px 7px; border-radius: 6px; background: var(--panel2);
+            color: var(--muted); border: 1px solid var(--line2); }
+  .sc .nm { font-weight: 700; margin: 8px 0 2px; font-size: 14px; }
+  .sc .bl { color: var(--muted); font-size: 12px; line-height: 1.4; }
+  .sc.atk .ic { color: var(--bad); border-color: rgba(255,77,106,.3); }
+  .sc.safe .ic { color: var(--ok); border-color: rgba(52,211,153,.3); }
+  .sc.devinbuilt .nm::after { content: "built by Devin"; margin-left: 6px; font: 600 10px var(--mono); color: var(--devin);
+            border: 1px solid rgba(45,212,191,.4); border-radius: 5px; padding: 1px 5px; vertical-align: 2px; }
+  .sc.active { border-color: var(--accent); background: linear-gradient(180deg, rgba(139,123,255,.16), var(--panel));
+               box-shadow: 0 0 0 1px var(--accent), 0 8px 30px rgba(139,123,255,.18); }
+
+  /* kill chain */
+  .chain { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-bottom: 14px;
+           background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .st { padding: 12px 16px; position: relative; color: var(--dim); transition: all .35s; border-right: 1px solid var(--line); }
+  .st:last-child { border-right: 0; }
+  .st .n { font: 700 11px var(--mono); letter-spacing: 1px; }
+  .st .l { font-weight: 700; font-size: 15px; margin-top: 2px; }
+  .st .d { font-size: 12px; margin-top: 2px; min-height: 18px; }
+  .st.on { color: var(--text); background: linear-gradient(180deg, rgba(255,77,106,.14), transparent); }
+  .st.on .n { color: var(--bad); }
+  .st.on.good { background: linear-gradient(180deg, rgba(52,211,153,.12), transparent); } .st.on.good .n { color: var(--ok); }
+  .st.on.dv { background: linear-gradient(180deg, rgba(45,212,191,.16), transparent); } .st.on.dv .n { color: var(--devin); }
+  .st.on .d { color: var(--muted); }
+  .st::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 0; transition: width .5s; background: var(--bad); }
+  .st.on::after { width: 100%; } .st.on.good::after { background: var(--ok); } .st.on.dv::after { background: var(--devin); }
+
+  /* kpis */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; position: relative; overflow: hidden; }
+  .kpi::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: var(--c, var(--line2)); opacity: .8; }
+  .kpi .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .kpi .value { font: 700 clamp(18px, 2vw, 28px)/1.2 var(--mono); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
   .bad { color: var(--bad); } .ok { color: var(--ok); } .warn { color: var(--warn); }
-  main { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; padding: 0 24px 24px; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
-  .panel h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
-  #feed { display: flex; flex-direction: column; gap: 8px; max-height: 64vh; overflow: auto; }
-  .ev { display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 10px 12px;
-        background: var(--panel2); border: 1px solid var(--line); border-left: 4px solid var(--ok);
-        border-radius: 8px; cursor: pointer; animation: in .25s ease-out; }
-  .ev.CONTAIN { border-left-color: var(--warn); } .ev.BLOCK { border-left-color: var(--bad); }
-  .ev.sel { outline: 1px solid var(--accent); }
-  .ev time { font: 12px var(--mono); color: var(--muted); }
-  .ev .desc { overflow: hidden; text-overflow: ellipsis; }
-  .ev .meta { font-size: 12px; color: var(--muted); }
-  .badge { font: 700 11px var(--mono); padding: 3px 8px; border-radius: 6px; }
-  .badge.ALLOW { background: #173b2c; color: var(--ok); } .badge.CONTAIN { background: #3d3016; color: var(--warn); }
-  .badge.BLOCK { background: #45161d; color: var(--bad); }
-  .score { height: 4px; background: var(--line); border-radius: 2px; margin-top: 6px; }
-  .score i { display: block; height: 100%; border-radius: 2px; }
+
+  /* layout */
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 14px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0; }
+  .panel h2 { margin: 0 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 700;
+              display: flex; align-items: center; gap: 8px; }
+  .live { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: pulse 1.4s infinite; }
+  #feed { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow: auto; }
+  .ev { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 11px 12px;
+        background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; animation: in .3s ease-out;
+        transition: border-color .15s; }
+  .ev:hover { border-color: var(--line2); }
+  .ev.BLOCK { border-color: rgba(255,77,106,.35); background: linear-gradient(90deg, rgba(255,77,106,.10), var(--panel2) 40%); }
+  .ev.CONTAIN { border-color: rgba(251,191,36,.35); }
+  .ev.sel { box-shadow: 0 0 0 1px var(--accent); }
+  .ring { width: 44px; height: 44px; position: relative; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 12px var(--mono); }
+  .ev .desc { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ev .meta { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ev .meta .k { font: 700 10px var(--mono); color: var(--text); background: var(--line); border-radius: 4px; padding: 1px 5px; margin-right: 6px; }
+  .badge { font: 700 11px var(--mono); padding: 4px 9px; border-radius: 6px; letter-spacing: .5px; }
+  .badge.ALLOW { background: rgba(52,211,153,.12); color: var(--ok); } .badge.CONTAIN { background: rgba(251,191,36,.14); color: var(--warn); }
+  .badge.BLOCK { background: rgba(255,77,106,.16); color: var(--bad); }
   .right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .sig { display: grid; grid-template-columns: 40px 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
-  .sig b { font: 700 13px var(--mono); color: var(--bad); }
-  .sig code { display: block; font: 12px var(--mono); color: var(--warn); margin-top: 2px; word-break: break-all; }
-  .sig .c { font: 600 11px var(--mono); color: var(--muted); }
-  ol.play { margin: 6px 0 0; padding-left: 20px; } ol.play li { margin: 3px 0; animation: in .3s ease-out both; }
-  .explain { color: var(--muted); margin-bottom: 8px; }
-  pre.diff { font: 12px/1.5 var(--mono); background: #0d111a; border: 1px solid var(--line); border-radius: 8px;
-             padding: 10px; overflow: auto; margin: 8px 0 0; }
-  pre.diff .a { color: var(--ok); } pre.diff .r { color: var(--bad); }
-  pre.diff .flag { background: rgba(255, 93, 108, .18); outline: 1px solid rgba(255,93,108,.5); }
-  #pager { display: none; border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad), 0 0 30px rgba(255,93,108,.25); }
-  #pager .t { font-weight: 700; font-size: 16px; }
-  #pager .btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  #pager .yes { background: var(--bad); border-color: var(--bad); color: #fff; }
-  #devin { display: none; border-color: var(--devin); }
-  #devin h2 { color: var(--devin); }
-  #devin pre { white-space: pre-wrap; font: 12px/1.5 var(--mono); background: #0d1a1a; border: 1px solid #1d4444;
-               border-radius: 8px; padding: 10px; margin: 8px 0; max-height: 220px; overflow: auto; }
-  .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--devin);
-           margin-right: 6px; animation: pulse 1.2s infinite; }
+
+  /* detail */
+  .dhead { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }
+  .gauge { flex: none; width: 92px; height: 92px; position: relative; }
+  .gauge svg { transform: rotate(-90deg); }
+  .gauge .v { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+  .gauge .v b { font: 800 26px/1 var(--mono); display: block; }
+  .gauge .v span { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+  .explain { color: var(--muted); font-size: 13px; }
+  .explain strong { color: var(--text); display: block; font-size: 15px; margin-bottom: 2px; }
+  .sig { display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .sig .w { font: 700 13px var(--mono); color: var(--bad); }
+  .sig .wb { height: 3px; border-radius: 2px; background: var(--bad); opacity: .7; margin-top: 5px; }
+  .sig code { display: block; font: 12px var(--mono); color: var(--warn); margin-top: 3px; word-break: break-all; }
+  .sig .c { font: 600 10px var(--mono); color: var(--dim); margin-left: 4px; }
+  h3 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); }
+  ol.play { margin: 0; padding: 0; list-style: none; counter-reset: s; }
+  ol.play li { counter-increment: s; display: grid; grid-template-columns: 24px 1fr; gap: 8px; padding: 4px 0; animation: in .35s ease-out both; }
+  ol.play li::before { content: "✓"; color: var(--ok); font-weight: 700; text-align: center; }
+  pre.diff { font: 12px/1.6 var(--mono); background: #0a0e16; border: 1px solid var(--line); border-radius: 10px;
+             padding: 10px 12px; overflow: auto; margin: 10px 0 0; }
+  pre.diff .a { color: var(--ok); } pre.diff .r { color: #ff8a9b; } pre.diff .h { color: var(--dim); }
+  pre.diff .flag { background: rgba(255,77,106,.16); box-shadow: inset 3px 0 0 var(--bad); display: inline-block; width: 100%; }
   .empty { color: var(--muted); }
-  @keyframes in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-  @keyframes pulse { 50% { opacity: .2; } }
+  .hint { color: var(--dim); font-size: 13px; padding: 28px 8px; text-align: center; }
+
+  /* pager */
+  #pager { display: none; border-color: rgba(255,77,106,.6); box-shadow: 0 0 0 1px rgba(255,77,106,.4), 0 10px 40px rgba(255,77,106,.18); animation: in .3s ease-out; }
+  .notif { display: flex; gap: 12px; align-items: flex-start; }
+  .notif .app { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+                background: linear-gradient(135deg, var(--bad), #b0244a); font: 800 13px var(--mono); }
+  #pager .t { font-weight: 700; font-size: 16px; }
+  #p-body { color: var(--muted); }
+  .btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btn { font: 600 13px var(--sans); cursor: pointer; border-radius: 9px; border: 1px solid var(--line2);
+         background: var(--panel2); color: var(--text); padding: 9px 16px; }
+  .btn:hover { border-color: var(--muted); }
+  .btn.yes { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  #p-result { margin-top: 10px; }
+
+  /* devin */
+  #devin { display: none; border-color: rgba(45,212,191,.5); background: linear-gradient(180deg, rgba(45,212,191,.07), var(--panel) 50%);
+           animation: in .3s ease-out; }
+  #devin h2 { color: var(--devin); }
+  .dsteps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .ds { border: 1px solid rgba(45,212,191,.25); border-radius: 10px; padding: 8px 10px; font-size: 12px; color: var(--muted); }
+  .ds b { display: block; color: var(--text); font-size: 13px; }
+  .ds.done { border-color: rgba(45,212,191,.6); } .ds.done b::before { content: "✓ "; color: var(--devin); }
+  #devin pre { white-space: pre-wrap; font: 12px/1.55 var(--mono); background: #071312; border: 1px solid rgba(45,212,191,.2);
+               border-radius: 10px; padding: 10px 12px; margin: 8px 0 0; max-height: 200px; overflow: auto; color: #b9efe7; }
+  .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--devin); animation: pulse 1.2s infinite; }
+
+  footer { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+           margin-top: 16px; color: var(--dim); font-size: 12px; }
+  .built { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .built a { color: var(--devin); text-decoration: none; border: 1px solid rgba(45,212,191,.35); border-radius: 999px; padding: 4px 10px; }
+  .built a:hover { background: rgba(45,212,191,.1); }
+
+  @keyframes in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes pulse { 50% { opacity: .25; } }
+  @keyframes throb { 50% { box-shadow: 0 0 24px rgba(255,77,106,.45); } }
+  @media (max-width: 1100px) { .scen { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 900px) {
-    main { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); }
-    header, .bar, .kpis, main { padding-left: 16px; padding-right: 16px; }
+    .wrap { padding: 0 16px 24px; }
+    main { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .scen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .chain { grid-template-columns: repeat(5, minmax(0, 1fr)); } .st { padding: 10px 8px; } .st .d { display: none; } .st .l { font-size: 12px; }
+    header { flex-wrap: wrap; } .hright { margin-left: 0; width: 100%; justify-content: space-between; }
+    .tag { display: none; }
+    .kpi .value { white-space: normal; }
   }
 </style>
 </head>
 <body>
+<div class="wrap">
 <header>
-  <div>
-    <div class="logo">Night <span>Watch</span></div>
-    <div class="tag">Autonomous defense for the bank's code, data and payment rails</div>
+  <div class="brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7bff"/><stop offset="1" stop-color="#5aa9ff"/></linearGradient></defs>
+      <path d="M20 3 L34 8 V19 C34 28 28 34 20 37 C12 34 6 28 6 19 V8 Z" fill="none" stroke="url(#g)" stroke-width="2.4"/>
+      <path d="M24.5 13.5 a7 7 0 1 0 2.5 8.5 a5.5 5.5 0 1 1 -2.5 -8.5 z" fill="url(#g)"/>
+    </svg>
+    <div>
+      <div class="logo">Night <span>Watch</span></div>
+      <div class="tag">Autonomous defense for the bank's code, data and payment rails</div>
+    </div>
   </div>
-  <div class="clock" id="clock">--:--:--</div>
+  <div class="hright">
+    <div class="status" id="status"><i></i><span id="status-t">ALL CLEAR</span></div>
+    <div class="clockbox"><div class="clock" id="clock">--:--:--</div><div class="clocklbl">bank time</div></div>
+  </div>
 </header>
 
-<div class="bar" id="scenarios"></div>
+<section class="scen" id="scenarios"></section>
+
+<section class="chain" id="chain">
+  <div class="st" data-s="detect"><div class="n">01</div><div class="l">Detect</div><div class="d" id="c-detect">watching telemetry</div></div>
+  <div class="st" data-s="decide"><div class="n">02</div><div class="l">Decide</div><div class="d" id="c-decide">score 0 to 100</div></div>
+  <div class="st" data-s="contain"><div class="n">03</div><div class="l">Contain</div><div class="d" id="c-contain">revoke, hold, roll back</div></div>
+  <div class="st" data-s="human"><div class="n">04</div><div class="l">Human check</div><div class="d" id="c-human">on-call confirms</div></div>
+  <div class="st" data-s="devin"><div class="n">05</div><div class="l">Fix with Devin</div><div class="d" id="c-devin">root-cause PR</div></div>
+</section>
 
 <section class="kpis">
-  <div class="kpi"><div class="label">At risk without Night Watch</div>
+  <div class="kpi" style="--c:var(--bad)"><div class="label">At risk without Night Watch</div>
     <div class="value bad" id="k-risk">-</div><div class="sub" id="k-risk-sub">pick a scenario</div></div>
-  <div class="kpi"><div class="label">Protected</div>
-    <div class="value ok" id="k-prot">AED 0</div><div class="sub" id="k-prot-sub">0 records</div></div>
-  <div class="kpi"><div class="label">Held, awaiting human</div>
+  <div class="kpi" style="--c:var(--ok)"><div class="label">Protected</div>
+    <div class="value ok" id="k-prot">AED 0</div><div class="sub" id="k-prot-sub">never left the bank</div></div>
+  <div class="kpi" style="--c:var(--warn)"><div class="label">Held for a human</div>
     <div class="value warn" id="k-held">AED 0</div><div class="sub" id="k-held-sub">0 deploys blocked</div></div>
-  <div class="kpi"><div class="label">Time to contain</div>
+  <div class="kpi" style="--c:var(--accent)"><div class="label">Time to contain</div>
     <div class="value" id="k-lat">-</div><div class="sub">detect + decide + act</div></div>
 </section>
 
 <main>
   <section class="panel">
-    <h2>Live telemetry</h2>
-    <div id="feed"><div class="empty">Pick a scenario above to replay it in real time.</div></div>
+    <h2><span class="live"></span>Live telemetry</h2>
+    <div id="feed"><div class="hint">Pick a scenario above. Night Watch replays it in real time.</div></div>
   </section>
   <div class="right">
     <section class="panel" id="pager">
       <h2>Page to on-call engineer</h2>
-      <div class="t" id="p-title"></div>
-      <div id="p-body"></div>
-      <div class="btns"><button class="yes" id="p-yes"></button><button id="p-no"></button></div>
+      <div class="notif"><div class="app">NW</div>
+        <div><div class="t" id="p-title"></div><div id="p-body"></div>
+          <div class="btns"><button class="btn yes" id="p-yes"></button><button class="btn" id="p-no"></button></div></div></div>
       <div id="p-result"></div>
     </section>
     <section class="panel" id="devin">
       <h2><span class="pulse"></span>Devin: autonomous remediation</h2>
+      <div class="dsteps">
+        <div class="ds done"><b>Task written</b>exact lines and fixes</div>
+        <div class="ds" id="ds-session"><b>Session opened</b><span id="ds-session-t">via Devin API</span></div>
+        <div class="ds" id="ds-pr"><b>Fix PR</b>checks restored + tests</div>
+      </div>
       <div id="d-status"></div>
       <pre id="d-task"></pre>
     </section>
     <section class="panel">
       <h2>Why Night Watch decided this</h2>
-      <div id="detail" class="empty">Click any event to see its reasoning.</div>
+      <div id="detail" class="hint">Click any event to see its reasoning.</div>
     </section>
   </div>
 </main>
+
+<footer>
+  <div>Night Watch · CIS Sprint x Devin · red track: protect the big guy</div>
+  <div class="built">Built with Devin:
+    <a href="https://github.com/DaniyarUE/CIS-Hackathon/pull/1" target="_blank">#1 backdoor fix</a>
+    <a href="https://github.com/DaniyarUE/CIS-Hackathon/pull/2" target="_blank">#2 config tamper detector</a>
+    <a href="https://github.com/DaniyarUE/CIS-Hackathon/pull/3" target="_blank">#3 follow-ups</a>
+  </div>
+</footer>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const aed = (n) => "AED " + Math.round(n).toLocaleString("en-US");
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const ICON = { api_call: "API", commit: "GIT", deploy: "CI", db_query: "DB" };
-let source = null, decisions = {}, latencies = [], atRisk = null, pending = null;
+const ICON = { api_call: "API", commit: "GIT", deploy: "CI", db_query: "DB", config_change: "CFG" };
+const SCEN = {
+  normal: { ic: "OK", cls: "safe", bl: "Payouts, a reviewed deploy, nightly jobs. Nothing should fire." },
+  drain:  { ic: "API", cls: "atk", bl: "Stolen partner key wires AED 450,000 to a crypto wallet at 2 AM." },
+  commit: { ic: "GIT", cls: "atk", bl: "Phished engineer pushes a backdoor into the payments service." },
+  exfil:  { ic: "DB", cls: "atk", bl: "Leaked credential dumps 3.3M customer records to an outside bucket." },
+  config: { ic: "CFG", cls: "atk devinbuilt", bl: "Insider switches off payment limits in production config." },
+};
+let source = null, decisions = {}, atRisk = null, pending = null, attacked = false, scenario = null;
 
 async function loadScenarios() {
   const list = await (await fetch("/api/scenarios")).json();
-  $("scenarios").innerHTML = list.map((s) => `<button data-id="${s.id}">${esc(s.name)}</button>`).join("");
+  $("scenarios").innerHTML = list.map((s) => {
+    const m = SCEN[s.id] || { ic: "EV", cls: "atk", bl: "" };
+    return `<button class="sc ${m.cls}" data-id="${s.id}"><span class="ic">${m.ic}</span>
+      <div class="nm">${esc(s.name)}</div><div class="bl">${esc(m.bl)}</div></button>`;
+  }).join("");
   $("scenarios").querySelectorAll("button").forEach((b) => (b.onclick = () => run(b.dataset.id, b)));
 }
 
+function setStatus(kind, text) {
+  $("status").className = "status " + kind; $("status-t").textContent = text;
+  document.body.classList.toggle("attack", kind === "attack");
+}
+
+function chain(step, text, cls = "") {
+  const el = document.querySelector(`.st[data-s="${step}"]`);
+  el.className = "st on " + cls;
+  if (text) $("c-" + step).textContent = text;
+}
+
+function resetChain() {
+  const d = { detect: "watching telemetry", decide: "score 0 to 100", contain: "revoke, hold, roll back",
+              human: "on-call confirms", devin: "root-cause PR" };
+  document.querySelectorAll(".st").forEach((el) => { el.className = "st"; $("c-" + el.dataset.s).textContent = d[el.dataset.s]; });
+}
+
 function reset() {
-  decisions = {}; latencies = []; pending = null;
+  decisions = {}; pending = null; attacked = false;
   $("feed").innerHTML = ""; $("pager").style.display = "none"; $("devin").style.display = "none";
-  $("detail").className = "empty"; $("detail").textContent = "Click any event to see its reasoning.";
-  $("k-lat").textContent = "-"; totals({ protected_aed: 0, held_aed: 0, protected_rows: 0, blocked_deploys: 0 });
+  $("detail").className = "hint"; $("detail").textContent = "Click any event to see its reasoning.";
+  $("k-lat").textContent = "-"; resetChain(); setStatus("", "WATCHING");
+  totals({ protected_aed: 0, held_aed: 0, protected_rows: 0, blocked_deploys: 0, rolled_back_controls: 0 });
 }
 
 function run(id, btn) {
   if (source) source.close();
+  scenario = id;
   document.querySelectorAll("#scenarios button").forEach((b) => b.classList.toggle("active", b === btn));
   reset();
   source = new EventSource("/api/run?scenario=" + id);
@@ -154,39 +332,72 @@ function run(id, btn) {
     atRisk = JSON.parse(m.data).at_risk;
     const parts = [];
     if (atRisk.rows) parts.push(atRisk.rows.toLocaleString("en-US") + " customer records");
-    if (atRisk.deploys) parts.push("backdoor in production");
-    $("k-risk").textContent = atRisk.aed ? aed(atRisk.aed) : (atRisk.rows ? (atRisk.rows / 1e6).toFixed(1) + "M rows" : (atRisk.deploys ? "1 backdoor" : "AED 0"));
+    if (atRisk.deploys) parts.push("backdoor heading to production");
+    if (atRisk.controls) parts.push("payment limits switched off");
+    $("k-risk").textContent = atRisk.aed ? aed(atRisk.aed) : (atRisk.rows ? (atRisk.rows / 1e6).toFixed(1) + "M records"
+      : (atRisk.deploys ? "1 backdoor" : (atRisk.controls ? plural(atRisk.controls, "control") + " off" : "AED 0")));
     $("k-risk-sub").textContent = parts.join(", ") || (atRisk.aed ? "drained to an offshore wallet" : "nothing malicious");
   });
   source.addEventListener("decision", (m) => onDecision(JSON.parse(m.data)));
   source.addEventListener("devin", (m) => onDevin(JSON.parse(m.data)));
-  source.addEventListener("done", () => source.close());
+  source.addEventListener("done", () => {
+    source.close();
+    if (!attacked) { setStatus("secured", "ALL CLEAR"); chain("detect", "all events normal", "good"); chain("decide", "0 false positives", "good"); }
+  });
 }
 
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
 function totals(t) {
-  const rows = (t.protected_rows || 0).toLocaleString("en-US") + " customer records";
-  $("k-prot").textContent = !t.protected_aed && t.protected_rows ? (t.protected_rows / 1e6).toFixed(1) + "M rows" : aed(t.protected_aed);
-  $("k-prot-sub").textContent = t.protected_rows ? rows + " never left" : "never left the bank";
+  const controlsOnly = !t.protected_aed && !t.protected_rows && t.rolled_back_controls;
+  if (!t.protected_aed && !t.protected_rows && !t.rolled_back_controls && t.blocked_deploys) {
+    $("k-prot").textContent = "Backdoor stopped";
+    $("k-prot-sub").textContent = "never reached production";
+    $("k-held").textContent = aed(t.held_aed);
+    $("k-held-sub").textContent = plural(t.blocked_deploys, "deploy") + " blocked";
+    return;
+  }
+  $("k-prot").textContent = controlsOnly ? plural(t.rolled_back_controls, "control") + " restored"
+    : (!t.protected_aed && t.protected_rows ? (t.protected_rows / 1e6).toFixed(1) + "M records" : aed(t.protected_aed));
+  $("k-prot-sub").textContent = controlsOnly ? "limits and checks rolled back"
+    : (t.protected_rows ? (t.protected_rows || 0).toLocaleString("en-US") + " records never left" : "never left the bank");
   $("k-held").textContent = aed(t.held_aed);
-  $("k-held-sub").textContent = (t.blocked_deploys || 0) + " deploys blocked";
+  $("k-held-sub").textContent = plural(t.blocked_deploys || 0, "deploy") + " blocked";
+}
+
+function color(d) { return d.action === "BLOCK" ? "var(--bad)" : d.action === "CONTAIN" ? "var(--warn)" : "var(--ok)"; }
+
+function ring(score, col, size, stroke) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${stroke}" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - score / 100)}" style="transition:stroke-dashoffset .6s"/></svg>`;
 }
 
 function onDecision({ decision: d, totals: t, prompt }) {
   decisions[d.event_id] = d;
   $("clock").textContent = d.ts.slice(11, 19);
-  latencies.push(d.latency_ms);
-  if (d.action !== "ALLOW") $("k-lat").textContent = d.latency_ms.toFixed(2) + " ms";
-  const col = d.action === "BLOCK" ? "var(--bad)" : d.action === "CONTAIN" ? "var(--warn)" : "var(--ok)";
   const el = document.createElement("div");
   el.className = "ev " + d.action;
-  el.innerHTML = `<div><b>${ICON[d.kind] || "EV"}</b><br><time>${d.ts.slice(11, 19)}</time></div>
+  el.innerHTML = `<div class="ring">${ring(d.score, color(d), 44, 4)}<b>${d.score}</b></div>
     <div style="min-width:0"><div class="desc">${esc(d.description)}</div>
-      <div class="meta">${esc(d.identity)} · ${esc(d.network || "")} · risk ${d.score}/100</div>
-      <div class="score"><i style="width:${d.score}%;background:${col}"></i></div></div>
+      <div class="meta"><span class="k">${ICON[d.kind] || "EV"}</span>${d.ts.slice(11, 19)} · ${esc(d.identity)} · ${esc(d.network || "")}</div></div>
     <span class="badge ${d.action}">${d.action}</span>`;
   el.onclick = () => show(d.event_id, el);
   $("feed").prepend(el);
   totals(t);
+  if (d.action !== "ALLOW") {
+    $("k-lat").textContent = d.latency_ms.toFixed(2) + " ms";
+    if (!attacked) {
+      attacked = true;
+      setStatus("attack", "UNDER ATTACK");
+      chain("detect", plural(d.signals.length, "signal") + " fired");
+      chain("decide", `risk ${d.score}/100 → ${d.action}`);
+      setTimeout(() => { chain("contain", `in ${d.latency_ms.toFixed(2)} ms`); setStatus("contained", "CONTAINED"); }, 700);
+    }
+  } else if (!attacked) {
+    chain("detect", "all normal so far", "good");
+  }
   if (d.action !== "ALLOW" && (!document.querySelector(".ev.sel") || prompt)) show(d.event_id, el);
   if (prompt) page(prompt);
 }
@@ -195,21 +406,21 @@ function show(id, el) {
   const d = decisions[id];
   document.querySelectorAll(".ev").forEach((x) => x.classList.toggle("sel", x === el));
   const flagged = new Set(d.signals.map((s) => s.evidence).filter(Boolean));
-  let html = `<div class="explain">${esc(d.explanation)}</div>`;
-  if (d.signals.length) {
-    html += d.signals.map((s) => `<div class="sig"><b>+${s.weight}</b><div>${esc(s.reason)} <span class="c">${s.code}</span>
-      ${s.evidence && d.kind === "commit" ? `<code>${esc(s.evidence)}</code>` : ""}</div></div>`).join("");
-  }
+  const verdict = { ALLOW: "Allowed", CONTAIN: "Contained", BLOCK: "Blocked" }[d.action];
+  let html = `<div class="dhead"><div class="gauge">${ring(d.score, color(d), 92, 8)}<div class="v"><div><b style="color:${color(d)}">${d.score}</b><span>RISK</span></div></div></div>
+    <div class="explain"><strong>${verdict}: ${esc(d.description)}</strong>${d.signals.length ? plural(d.signals.length, "reason") + ", each with points:" : "Matches this identity's normal behaviour."}</div></div>`;
+  html += d.signals.map((s) => `<div class="sig"><div><div class="w">+${s.weight}</div><div class="wb" style="width:${Math.min(46, Math.round(s.weight * 1.3))}px"></div></div>
+    <div>${esc(s.reason)}<span class="c">${s.code}</span>${s.evidence && d.kind === "commit" ? `<code>${esc(s.evidence)}</code>` : ""}</div></div>`).join("");
   if (d.diff) {
-    html += `<pre class="diff">${d.diff.split("\n").map((l) => {
+    html += `<h3>The commit, flagged lines highlighted</h3><pre class="diff">${d.diff.split("\n").map((l) => {
       const body = l.slice(1).trim();
-      const cls = l.startsWith("+") && !l.startsWith("+++") ? "a" : l.startsWith("-") && !l.startsWith("---") ? "r" : "";
+      const cls = l.startsWith("+++") || l.startsWith("---") || l.startsWith("@@") ? "h" : l.startsWith("+") ? "a" : l.startsWith("-") ? "r" : "";
       return `<span class="${cls} ${flagged.has(body) ? "flag" : ""}">${esc(l)}</span>`;
     }).join("\n")}</pre>`;
   }
   if (d.playbook.length) {
-    html += `<h2 style="margin-top:12px">Autonomous response</h2><ol class="play">` +
-      d.playbook.map((p, i) => `<li style="animation-delay:${i * 0.18}s">${esc(p)}</li>`).join("") + "</ol>";
+    html += `<h3>Autonomous response</h3><ol class="play">` +
+      d.playbook.map((p, i) => `<li style="animation-delay:${i * 0.15}s">${esc(p)}</li>`).join("") + "</ol>";
   }
   $("detail").className = ""; $("detail").innerHTML = html;
 }
@@ -220,6 +431,7 @@ function page(p) {
   $("p-title").textContent = p.title; $("p-body").textContent = p.body;
   $("p-yes").textContent = p.yes; $("p-no").textContent = p.no; $("p-result").innerHTML = "";
   $("p-yes").disabled = $("p-no").disabled = false;
+  chain("human", "waiting for on-call");
 }
 
 async function respond(confirmed) {
@@ -229,6 +441,8 @@ async function respond(confirmed) {
     body: JSON.stringify({ event_id: pending.event_id, confirmed }) })).json();
   $("p-result").innerHTML = `<ol class="play">${r.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`;
   totals(r.totals); pending = null;
+  chain("human", confirmed ? "incident confirmed" : "released as false positive", "good");
+  setStatus("secured", confirmed ? "SECURED" : "RELEASED");
 }
 $("p-yes").onclick = () => respond(true);
 $("p-no").onclick = () => respond(false);
@@ -236,11 +450,14 @@ $("p-no").onclick = () => respond(false);
 function onDevin(r) {
   $("devin").style.display = "block";
   const st = {
-    sent: `Session opened: <a style="color:var(--devin)" href="${esc(r.session)}" target="_blank">${esc(r.session)}</a>`,
-    dry_run: "Dry run (no DEVIN_API_KEY set). This is the task Night Watch hands to Devin:",
+    sent: `Live session: <a style="color:var(--devin)" href="${esc(r.session)}" target="_blank">${esc(r.session)}</a>`,
+    dry_run: "Dry run (no DEVIN_API_KEY set). This is the exact task Night Watch hands to Devin:",
     error: "Could not reach Devin (" + esc(r.error) + "). Task:",
   }[r.status];
   $("d-status").innerHTML = st; $("d-task").textContent = r.task;
+  if (r.status === "sent") { $("ds-session").classList.add("done"); $("ds-session-t").textContent = "live in Devin"; }
+  $("ds-pr").innerHTML = `<b>Fix PR</b><a style="color:var(--devin)" href="https://github.com/DaniyarUE/CIS-Hackathon/pull/1" target="_blank">see Devin's PR #1</a>`;
+  chain("devin", r.status === "sent" ? "Devin session opened" : "task handed to Devin", "dv");
 }
 
 loadScenarios();
